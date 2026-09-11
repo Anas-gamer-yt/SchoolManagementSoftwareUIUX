@@ -1,0 +1,10 @@
+{
+  "description": "Streamline school management with a comprehensive platform for student, staff, fee, and report management, enhancing efficiency and organization for educational institutions.",
+  "robots": {
+    "index": false
+  },
+  "accessibility": {
+    "addBypassLinks": false,
+    "ignoreReducedMotion": false
+  }
+}
