@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from "react";
+import { createBrowserRouter, RouterProvider, useLocation, useNavigate } from "react-router";
 
 type NavItem = { label: string; icon: string; badge?: string };
 
@@ -26,12 +27,17 @@ const students = [
 
 const actions = ["Add student", "Add fee payment", "Pay salary", "Add expense", "Generate report", "Create backup"];
 
+const routeFor = (label: string) => `/${label.toLowerCase().replace(/&/g, "and").replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "")}`;
+const pageFor = (pathname: string) => navigation.flatMap(group => group.items).find(item => routeFor(item.label) === pathname)?.label || "Dashboard";
+
 function Logo() { return <div className="logo-mark"><span>✦</span></div>; }
 function IconButton({ children, label, onClick }: { children: ReactNode; label: string; onClick?: () => void }) { return <button onClick={onClick} className="icon-button" aria-label={label}>{children}</button>; }
 
-export default function App() {
+function SchoolApp() {
+  const location = useLocation();
+  const routerNavigate = useNavigate();
   const [signedIn, setSignedIn] = useState(false);
-  const [page, setPage] = useState("Dashboard");
+  const page = pageFor(location.pathname);
   const [dark, setDark] = useState(false);
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<string[]>([]);
@@ -43,10 +49,10 @@ export default function App() {
   useEffect(() => { const i = setInterval(() => setLiveTime(new Date()), 1000); return () => clearInterval(i); }, []);
   useEffect(() => { if (!toast) return; const t = setTimeout(() => setToast(""), 2400); return () => clearTimeout(t); }, [toast]);
   const filteredStudents = useMemo(() => students.filter(s => s.join(" ").toLowerCase().includes(search.toLowerCase())), [search]);
-  const navigate = (label: string) => { setPage(label); setSidebarOpen(false); setSearch(""); };
+  const navigate = (label: string) => { routerNavigate(routeFor(label)); setSidebarOpen(false); setSearch(""); };
   const tablePage = page === "Students" || page === "Fees" || page === "Staff" || page === "Expenses" || page === "Donations" || page === "Late fees list";
 
-  if (!signedIn) return <Login onSuccess={() => setSignedIn(true)} />;
+  if (!signedIn) return <Login onSuccess={() => { setSignedIn(true); routerNavigate("/dashboard"); }} />;
 
   return <div className={`${dark ? "app dark" : "app"} ${sidebarCollapsed ? "sidebar-collapsed" : ""}`}>
     <aside className={`${sidebarOpen ? "sidebar sidebar-open" : "sidebar"} ${sidebarCollapsed ? "sidebar-mini" : ""}`}>
@@ -63,6 +69,12 @@ export default function App() {
     {toast && <div className="toast"><span>✓</span>{toast}</div>}
     {modal && <RecordModal kind={modal} close={() => setModal(null)} notify={(message) => { setModal(null); setToast(message); }} />}
   </div>;
+}
+
+const router = createBrowserRouter([{ path: "*", Component: SchoolApp }]);
+
+export default function App() {
+  return <RouterProvider router={router} />;
 }
 
 function Login({ onSuccess }: { onSuccess: () => void }) {
